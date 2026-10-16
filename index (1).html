@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ماسح درب الشفاء</title>
+<meta name="theme-color" content="#0b2a28">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ماسح الشفاء">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b2a28;
+    --bg2: #0f3a36;
+    --card: #134741;
+    --line: #1f625a;
+    --mint: #6ee7c8;
+    --mint-dim: #3fb89d;
+    --text: #effaf7;
+    --muted: #9cc7bf;
+    --warn: #fbbf24;
+    --bad: #ff8a8a;
+    --good: #6ee7a0;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: 'Cairo', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body { background: radial-gradient(120% 70% at 50% 0%, var(--bg2) 0%, var(--bg) 62%); min-height: 100vh; display: flex; flex-direction: column; }
+  .wrap { width: 100%; max-width: 520px; margin: 0 auto; padding: 18px 20px 28px; display: flex; flex-direction: column; flex: 1; }
+
+  header { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 46px; height: 46px; border-radius: 13px; object-fit: cover; background: var(--card); border: 1px solid var(--line); flex: none; }
+  .logo.hide { visibility: hidden; }
+  header h1 { margin: 0; font-size: 19px; font-weight: 900; line-height: 1.2; }
+  header p { margin: 2px 0 0; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+  .link { margin-inline-start: auto; display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 800; color: var(--muted); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); }
+  .dot.on { background: var(--good); box-shadow: 0 0 0 4px rgba(110,231,160,.18); }
+
+  main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 26px 0 18px; text-align: center; }
+  .shutter { position: relative; width: 196px; height: 196px; border: 0; padding: 0; background: none; cursor: pointer; color: var(--bg); }
+  .shutter .ring { position: absolute; inset: 0; border-radius: 50%; border: 3px solid var(--mint); opacity: .55; }
+  .shutter .ring.r2 { inset: 12px; opacity: .9; border-width: 2px; border-style: dashed; animation: spin 24s linear infinite; }
+  .shutter .core { position: absolute; inset: 26px; border-radius: 50%; background: var(--mint); display: grid; place-items: center; transition: transform .15s ease, background .15s ease; box-shadow: 0 14px 34px rgba(0,0,0,.35); }
+  .shutter:active .core { transform: scale(.93); background: var(--mint-dim); }
+  .shutter:focus-visible { outline: 3px solid #fff; outline-offset: 6px; border-radius: 50%; }
+  .shutter svg { width: 62px; height: 62px; }
+  .shutter[disabled] { opacity: .5; pointer-events: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .shutter .ring.r2 { animation: none; } }
+
+  .cta { margin: 22px 0 4px; font-size: 22px; font-weight: 900; }
+  .hint { margin: 0; font-size: 13.5px; font-weight: 600; color: var(--muted); max-width: 320px; line-height: 1.7; }
+  .gallery-btn { margin-top: 18px; background: transparent; border: 1.5px solid var(--line); color: var(--text); font: inherit; font-weight: 800; font-size: 14px; padding: 11px 20px; border-radius: 999px; cursor: pointer; }
+  .gallery-btn:active { background: var(--card); }
+  .gallery-btn:focus-visible { outline: 3px solid var(--mint); outline-offset: 3px; }
+
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .list h2 { margin: 0 0 2px; font-size: 14px; font-weight: 800; color: var(--muted); }
+  .item { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 10px; }
+  .item img { width: 54px; height: 54px; border-radius: 10px; object-fit: cover; flex: none; background: var(--bg2); }
+  .item .info { flex: 1; min-width: 0; }
+  .item .t { font-size: 13.5px; font-weight: 800; }
+  .item .s { font-size: 12.5px; font-weight: 700; margin-top: 2px; }
+  .s.up { color: var(--warn); } .s.wait { color: var(--mint); } .s.done { color: var(--good); } .s.fail { color: var(--bad); }
+  .item .bar { height: 4px; border-radius: 4px; background: var(--bg2); margin-top: 7px; overflow: hidden; }
+  .item .bar i { display: block; height: 100%; width: 0; background: var(--mint); transition: width .25s ease; }
+  .retry { flex: none; background: var(--mint); color: var(--bg); border: 0; border-radius: 10px; font: inherit; font-weight: 900; font-size: 12.5px; padding: 9px 12px; cursor: pointer; }
+
+  .install { display: none; margin-top: 16px; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 14px; font-size: 12.5px; font-weight: 700; color: var(--muted); line-height: 1.8; text-align: center; }
+  .install.show { display: block; }
+  .install b { color: var(--text); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img class="logo" id="logo" src="logo.png" alt="" onerror="this.classList.add('hide')">
+    <div>
+      <h1>ماسح درب الشفاء</h1>
+      <p>صوّر الفاتورة وتصل للنظام تلقائياً</p>
+    </div>
+    <div class="link"><span class="dot" id="dot"></span><span id="linkTxt">جارٍ الاتصال</span></div>
+  </header>
+
+  <main>
+    <button class="shutter" id="shot" type="button" aria-label="تصوير الفاتورة" disabled>
+      <span class="ring"></span><span class="ring r2"></span>
+      <span class="core">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </span>
+    </button>
+    <p class="cta">صوّر الفاتورة</p>
+    <p class="hint">ضع الورقة على سطح مستوٍ بإضاءة جيدة. عند الالتقاط ترتفع الصورة وتُقرأ في برنامج الصيدلية دون أي خطوة أخرى.</p>
+    <button class="gallery-btn" id="pick" type="button">اختيار صورة من المعرض</button>
+    <div class="install" id="install">لتثبيت التطبيق: اضغط زر المشاركة في سفاري ثم <b>إضافة إلى الشاشة الرئيسية</b></div>
+  </main>
+
+  <section class="list" id="list" hidden>
+    <h2>آخر الصور المرسلة</h2>
+  </section>
+</div>
+
+<input class="sr" id="camIn" type="file" accept="image/*" capture="environment" tabindex="-1">
+<input class="sr" id="galIn" type="file" accept="image/*" tabindex="-1">
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+'use strict';
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCtz6MiAPW5I1BDNqJXMe-q8CgOrsEfC10",
+  authDomain: "healingpath-51637.firebaseapp.com",
+  databaseURL: "https://healingpath-51637-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "healingpath-51637",
+  storageBucket: "healingpath-51637.firebasestorage.app",
+  messagingSenderId: "247914857779",
+  appId: "1:247914857779:web:1c0e49c02d3ce6f109aa46"
+};
+
+const $ = id => document.getElementById(id);
+const INBOX = 'pos/scanInbox';
+const MAX_SIDE = 2200, QUALITY = 0.86;
+let db = null, ready = false;
+const jobs = new Map();
+
+/* manifest يُنشأ برمجياً حتى يبقى كل شيء في ملف واحد */
+(() => {
+  try {
+    const base = location.href.split('#')[0].split('?')[0];
+    const icon = new URL('logo.png', base).href;
+    const mf = {
+      name: 'ماسح درب الشفاء', short_name: 'ماسح الشفاء', lang: 'ar', dir: 'rtl',
+      start_url: base, scope: base, display: 'standalone',
+      background_color: '#0b2a28', theme_color: '#0b2a28',
+      icons: [{ src: icon, sizes: '512x512', type: 'image/png', purpose: 'any' }]
+    };
+    const l = document.createElement('link');
+    l.rel = 'manifest';
+    l.href = URL.createObjectURL(new Blob([JSON.stringify(mf)], { type: 'application/manifest+json' }));
+    document.head.append(l);
+  } catch (_) {}
+  const standalone = window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  if (!standalone) $('install').classList.add('show');
+})();
+
+function setLink(on, txt) {
+  $('dot').classList.toggle('on', !!on);
+  $('linkTxt').textContent = txt;
+  $('shot').disabled = !ready;
+}
+
+async function boot() {
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    if (!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
+    db = firebase.database();
+    ready = true;
+    db.ref('.info/connected').on('value', s => setLink(s.val() === true, s.val() === true ? 'متصل' : 'لا يوجد اتصال'));
+    setLink(true, 'متصل');
+  } catch (e) {
+    console.warn(e);
+    ready = false;
+    setLink(false, 'تعذّر الاتصال');
+    setTimeout(boot, 6000);
+  }
+}
+window.addEventListener('online', () => { if (!ready) boot(); });
+
+function loadImage(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); res(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('bad image')); };
+    img.src = url;
+  });
+}
+
+async function compress(file) {
+  const img = await loadImage(file);
+  const k = Math.min(1, MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.naturalWidth * k);
+  c.height = Math.round(img.naturalHeight * k);
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+  x.drawImage(img, 0, 0, c.width, c.height);
+  const full = c.toDataURL('image/jpeg', QUALITY);
+  const t = document.createElement('canvas');
+  const tk = 108 / Math.max(c.width, c.height);
+  t.width = Math.round(c.width * tk); t.height = Math.round(c.height * tk);
+  t.getContext('2d').drawImage(c, 0, 0, t.width, t.height);
+  return { full, thumb: t.toDataURL('image/jpeg', 0.6) };
+}
+
+const STATUS = {
+  compressing: ['up',   'جارٍ تجهيز الصورة…'],
+  uploading:   ['up',   'جارٍ الرفع…'],
+  new:         ['wait', 'وصلت للسحابة — بانتظار فتح الماسح في الحاسوب'],
+  processing:  ['wait', 'النظام يقرأ الفاتورة…'],
+  done:        ['done', 'تمت القراءة في الحاسوب ✓'],
+  failed:      ['fail', 'فشلت القراءة — صوّر الفاتورة مرة ثانية'],
+  error:       ['fail', 'فشل الرفع']
+};
+
+function draw(job) {
+  let el = job.el;
+  if (!el) {
+    el = job.el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = '<img alt=""><div class="info"><div class="t"></div><div class="s"></div><div class="bar"><i></i></div></div>';
+    el.querySelector('img').src = job.thumb;
+    el.querySelector('.t').textContent = job.time;
+    const list = $('list');
+    list.hidden = false;
+    list.insertBefore(el, list.children[1] || null);
+    while (list.children.length > 9) list.lastChild.remove();
+  }
+  const [cls, txt] = STATUS[job.status] || STATUS.error;
+  const s = el.querySelector('.s');
+  s.className = 's ' + cls; s.textContent = txt;
+  el.querySelector('.bar').style.display = job.status === 'uploading' ? '' : 'none';
+  el.querySelector('.bar i').style.width = (job.progress || 0) + '%';
+  const old = el.querySelector('.retry');
+  if (old) old.remove();
+  if (job.status === 'error') {
+    const b = document.createElement('button');
+    b.className = 'retry'; b.type = 'button'; b.textContent = 'إعادة الرفع';
+    b.onclick = () => upload(job);
+    el.append(b);
+  }
+}
+
+async function upload(job) {
+  if (!ready) { job.status = 'error'; draw(job); boot(); return; }
+  job.status = 'uploading'; job.progress = 35; draw(job);
+  const ref = db.ref(INBOX + '/' + job.id);
+  try {
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 45000));
+    await Promise.race([ref.set({
+      id: job.id,
+      status: 'new',
+      createdAt: Date.now(),
+      device: 'phone',
+      image: job.full,
+      thumb: job.thumb
+    }), timeout]);
+    job.progress = 100; job.status = 'new'; draw(job);
+    ref.child('status').on('value', s => {
+      const v = s.val();
+      if (!v) return;
+      job.status = v; draw(job);
+      if (v === 'done' || v === 'failed') ref.child('status').off();
+    });
+  } catch (e) {
+    console.warn(e);
+    job.status = 'error'; draw(job);
+  }
+}
+
+async function handleFile(file) {
+  if (!file) return;
+  const id = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+  const d = new Date();
+  const job = { id, status: 'compressing', progress: 0, thumb: '', time: d.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' }) };
+  jobs.set(id, job);
+  try {
+    const p = await compress(file);
+    job.full = p.full; job.thumb = p.thumb;
+    draw(job);
+    if (navigator.vibrate) navigator.vibrate(30);
+    await upload(job);
+  } catch (e) {
+    console.warn(e);
+    job.thumb = job.thumb || 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+    job.status = 'error'; draw(job);
+  }
+}
+
+const cam = $('camIn'), gal = $('galIn');
+$('shot').onclick = () => { cam.value = ''; cam.click(); };
+$('pick').onclick = () => { gal.value = ''; gal.click(); };
+cam.onchange = () => handleFile(cam.files[0]);
+gal.onchange = () => [...gal.files].forEach(handleFile);
+
+boot();
+</script>
+</body>
+</html>
