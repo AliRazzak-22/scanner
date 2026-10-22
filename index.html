@@ -35,7 +35,7 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: 'Cairo', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif; }
   html { scroll-padding-top: env(safe-area-inset-top, 0px); }
-  body { background: radial-gradient(120% 70% at 50% 0%, var(--bg2) 0%, var(--bg) 62%); min-height: 100vh; display: flex; flex-direction: column; }
+   body { background: radial-gradient(120% 70% at 50% 0%, #0f3a36 0%, #0b2a28 62%); min-height: 100vh; display: flex; flex-direction: column; }
   .wrap { width: 100%; max-width: 520px; margin: 0 auto; padding: 18px 20px 28px; display: flex; flex-direction: column; flex: 1; }
 
   header { display: flex; align-items: center; gap: 12px; }
@@ -81,6 +81,30 @@
   .install.show { display: block; }
   .install b { color: var(--text); }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  /* ★ مفتاح الوجهة (شكل زر الآيفون) + ثيم الإدخال السريع الأزرق يتحوّل تدريجياً */
+  .mode { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px auto 0; }
+  .mlabel { font-size: 14.5px; font-weight: 800; color: var(--muted); transition: color .5s ease; }
+  .mlabel.act { color: var(--text); }
+  .sw { position: relative; flex: none; width: 88px; height: 51px; border-radius: 999px; border: 0; padding: 0; cursor: pointer;
+        -webkit-appearance: none; appearance: none; background: var(--mint-dim);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.10), 0 8px 22px rgba(0,0,0,.34);
+        transition: background-color .55s ease, box-shadow .55s ease; }
+  .sw .knob { position: absolute; top: 4px; right: 4px; width: 43px; height: 43px; border-radius: 50%; background: #fff;
+        box-shadow: 0 3px 10px rgba(0,0,0,.38), 0 1px 2px rgba(0,0,0,.2);
+        transition: transform .45s cubic-bezier(.32,1.42,.6,1); }
+  .sw[aria-checked="true"] .knob { transform: translateX(-37px); }
+  .sw[aria-checked="true"] { background: #2f7bff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.16), 0 8px 26px rgba(47,123,255,.5); }
+  .sw:focus-visible { outline: 3px solid #fff; outline-offset: 5px; }
+  .mode-cap { margin: 9px 0 0; font-size: 12.5px; font-weight: 800; color: var(--muted); text-align: center; transition: color .5s ease; }
+  .mode-cap b { color: var(--mint); }
+  html.quick { --bg:#081a2e; --bg2:#0e2743; --card:#123055; --line:#1d4a7d; --mint:#7cc4ff; --mint-dim:#3f8fe0; --text:#eef6ff; --muted:#9dbcd8; }
+  body::after { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0;
+        background: radial-gradient(120% 70% at 50% 0%, #123c6e 0%, #081a2e 62%); transition: opacity .7s ease; }
+  html.quick body::after { opacity: 1; }
+  .wrap { position: relative; z-index: 1; }
+  html, .item, .item img, .logo, .gallery-btn, .retry, .install, .bar i, .mlabel, .mode-cap, .cta, .hint, header p, .link, .dot { transition: background-color .6s ease, border-color .6s ease, color .6s ease, box-shadow .6s ease; }
+  .shutter .ring, .shutter .core { transition: transform .15s ease, background-color .6s ease, border-color .6s ease, box-shadow .6s ease; }
+  @media (prefers-reduced-motion: reduce) { body::after, .sw, .sw .knob, .item { transition: none; } }
 </style>
 </head>
 <body>
@@ -92,7 +116,14 @@
       <p>صوّر الفاتورة وتصل للنظام تلقائياً</p>
     </div>
     <div class="link"><span class="dot" id="dot"></span><span id="linkTxt">جارٍ الاتصال</span></div>
-  </header>
+   </header>
+
+  <div class="mode">
+    <span class="mlabel act" id="mlScan">الماسح</span>
+    <button class="sw" id="modeSw" type="button" role="switch" aria-checked="false" aria-label="الوجهة: ماسح الفواتير أم الإدخال السريع"><span class="knob"></span></button>
+    <span class="mlabel" id="mlQuick">إدخال سريع</span>
+  </div>
+  <p class="mode-cap">تصل الصور مباشرة إلى <b id="capTo">ماسح الفواتير</b></p>
 
   <main>
     <button class="shutter" id="shot" type="button" aria-label="تصوير الفاتورة" disabled>
@@ -131,6 +162,31 @@ const FIREBASE_CONFIG = {
 };
 
 const $ = id => document.getElementById(id);
+
+/* ★ الوجهة: ماسح الفواتير (افتراضي) أو الإدخال السريع — نفس الصورة، مسار آخر وثيم أزرق */
+const QUICK_INBOX = 'pos/quickInbox';
+const isQuick = () => document.documentElement.classList.contains('quick');
+function applyMode(q, byUser) {
+  document.documentElement.classList.toggle('quick', q);
+  $('modeSw').setAttribute('aria-checked', q ? 'true' : 'false');
+  $('mlScan').classList.toggle('act', !q);
+  $('mlQuick').classList.toggle('act', q);
+  $('capTo').textContent = q ? 'الإدخال السريع' : 'ماسح الفواتير';
+  const h1 = document.querySelector('header h1'), sub = document.querySelector('header p');
+  if (h1) h1.textContent = q ? 'الإدخال السريع' : 'ماسح درب الشفاء';
+  if (sub) sub.textContent = q ? 'صوّر علبات الدواء دفعة واحدة' : 'صوّر الفاتورة وتصل للنظام تلقائياً';
+  const cta = document.querySelector('.cta'), hint = document.querySelector('.hint'), shot = $('shot');
+  if (cta) cta.textContent = q ? 'صوّر العلبات' : 'صوّر الفاتورة';
+  if (hint) hint.textContent = q
+    ? 'رصّ العلبات على سطح مستوٍ بحيث تظهر الواجهة الأمامية لكل علبة — صورة واحدة واضحة تكفي لعشرين أو ثلاثين صنفاً، وتصل مباشرة إلى «الإدخال السريع» في الحاسوب.'
+    : 'ضع الورقة على سطح مستوٍ بإضاءة جيدة. عند الالتقاط ترتفع الصورة وتُقرأ في برنامج الصيدلية دون أي خطوة أخرى.';
+  if (shot) shot.setAttribute('aria-label', q ? 'تصوير علبات الدواء' : 'تصوير الفاتورة');
+  const tc = document.querySelector('meta[name="theme-color"]');
+  if (tc) tc.setAttribute('content', q ? '#081a2e' : '#0b2a28');
+  try { localStorage.setItem('ds_inbox_dest', q ? 'quick' : 'scan'); } catch (_) {}
+  if (byUser && navigator.vibrate) navigator.vibrate(q ? [16, 45, 22] : 22);
+}
+$('modeSw').onclick = () => applyMode(!isQuick(), true);
 const INBOX = 'pos/scanInbox';
 const MAX_SIDE = 2200, QUALITY = 0.86;
 let db = null, ready = false;
@@ -228,9 +284,12 @@ function draw(job) {
     list.insertBefore(el, list.children[1] || null);
     while (list.children.length > 9) list.lastChild.remove();
   }
-  const [cls, txt] = STATUS[job.status] || STATUS.error;
+    const [cls, txt] = STATUS[job.status] || STATUS.error;
+  const QTXT = isQuick() && (job.inbox || INBOX) === QUICK_INBOX
+    ? { new: 'وصلت للسحابة — بانتظار فتح «الإدخال السريع» في الحاسوب', processing: 'الإدخال السريع يقرأ العلبات…', done: 'تمت القراءة في الإدخال السريع ✓', failed: 'فشلت قراءة العلبات — صوّرها من جديد' } : null;
+  const msg = (QTXT && QTXT[job.status]) || txt;
   const s = el.querySelector('.s');
-  s.className = 's ' + cls; s.textContent = txt;
+   s.className = 's ' + cls; s.textContent = msg;
   el.querySelector('.bar').style.display = job.status === 'uploading' ? '' : 'none';
   el.querySelector('.bar i').style.width = (job.progress || 0) + '%';
   const old = el.querySelector('.retry');
@@ -246,7 +305,7 @@ function draw(job) {
 async function upload(job) {
   if (!ready) { job.status = 'error'; draw(job); boot(); return; }
   job.status = 'uploading'; job.progress = 35; draw(job);
-  const ref = db.ref(INBOX + '/' + job.id);
+    const ref = db.ref((job.inbox || INBOX) + '/' + job.id);
   try {
     const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 45000));
     await Promise.race([ref.set({
@@ -254,6 +313,7 @@ async function upload(job) {
       status: 'new',
       createdAt: Date.now(),
       device: 'phone',
+      dest: (job.inbox || INBOX) === QUICK_INBOX ? 'quick' : 'scan',
       image: job.full,
       thumb: job.thumb
     }), timeout]);
@@ -274,7 +334,7 @@ async function handleFile(file) {
   if (!file) return;
   const id = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
   const d = new Date();
-  const job = { id, status: 'compressing', progress: 0, thumb: '', time: d.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' }) };
+  const job = { id, status: 'compressing', progress: 0, thumb: '', inbox: isQuick() ? QUICK_INBOX : INBOX, time: d.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' }) };
   jobs.set(id, job);
   try {
     const p = await compress(file);
