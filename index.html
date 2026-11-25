@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ماسح درب الشفاء</title>
+<meta name="theme-color" content="#0b2a28">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ماسح الشفاء">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b2a28;
+    --bg2: #0f3a36;
+    --card: #134741;
+    --line: #1f625a;
+    --mint: #6ee7c8;
+    --mint-dim: #3fb89d;
+    --text: #effaf7;
+    --muted: #9cc7bf;
+    --warn: #fbbf24;
+    --bad: #ff8a8a;
+    --good: #6ee7a0;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: 'Cairo', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+   body { background: radial-gradient(120% 70% at 50% 0%, #0f3a36 0%, #0b2a28 62%); min-height: 100vh; display: flex; flex-direction: column; }
+  .wrap { width: 100%; max-width: 520px; margin: 0 auto; padding: 18px 20px 28px; display: flex; flex-direction: column; flex: 1; }
+
+  header { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 46px; height: 46px; border-radius: 13px; object-fit: cover; background: var(--card); border: 1px solid var(--line); flex: none; }
+  .logo.hide { visibility: hidden; }
+  header h1 { margin: 0; font-size: 19px; font-weight: 900; line-height: 1.2; }
+  header p { margin: 2px 0 0; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+  .link { margin-inline-start: auto; display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 800; color: var(--muted); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); }
+  .dot.on { background: var(--good); box-shadow: 0 0 0 4px rgba(110,231,160,.18); }
+
+  main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 26px 0 18px; text-align: center; }
+  .shutter { position: relative; width: 196px; height: 196px; border: 0; padding: 0; background: none; cursor: pointer; color: var(--bg); }
+  .shutter .ring { position: absolute; inset: 0; border-radius: 50%; border: 3px solid var(--mint); opacity: .55; }
+  .shutter .ring.r2 { inset: 12px; opacity: .9; border-width: 2px; border-style: dashed; animation: spin 24s linear infinite; }
+  .shutter .core { position: absolute; inset: 26px; border-radius: 50%; background: var(--mint); display: grid; place-items: center; transition: transform .15s ease, background .15s ease; box-shadow: 0 14px 34px rgba(0,0,0,.35); }
+  .shutter:active .core { transform: scale(.93); background: var(--mint-dim); }
+  .shutter:focus-visible { outline: 3px solid #fff; outline-offset: 6px; border-radius: 50%; }
+  .shutter svg { width: 62px; height: 62px; }
+  .shutter[disabled] { opacity: .5; pointer-events: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .shutter .ring.r2 { animation: none; } }
+
+  .cta { margin: 22px 0 4px; font-size: 22px; font-weight: 900; }
+  .hint { margin: 0; font-size: 13.5px; font-weight: 600; color: var(--muted); max-width: 320px; line-height: 1.7; }
+  .gallery-btn { margin-top: 18px; background: transparent; border: 1.5px solid var(--line); color: var(--text); font: inherit; font-weight: 800; font-size: 14px; padding: 11px 20px; border-radius: 999px; cursor: pointer; }
+  .gallery-btn:active { background: var(--card); }
+  .gallery-btn:focus-visible { outline: 3px solid var(--mint); outline-offset: 3px; }
+  .pages { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 14px auto 0; }
+  .pages[hidden], .camera[hidden] { display: none; }
+  .pages .sw { width: 72px; height: 43px; }
+  .pages .sw .knob { width: 35px; height: 35px; }
+  .pages .sw[aria-checked="true"] .knob { transform: translateX(-29px); }
+  .pages-label { font-size: 13.5px; font-weight: 800; color: var(--text); }
+  .page-cap { margin: 7px 0 0; min-height: 20px; text-align: center; font-size: 11.5px; font-weight: 700; color: var(--muted); }
+  .page-cap.on { color: var(--mint); }
+
+  .camera { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; background: #000; color: #fff; }
+  .cam-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(12px + env(safe-area-inset-top)) 16px 12px; background: rgba(0,0,0,.72); }
+  .cam-state { font-size: 12.5px; font-weight: 800; color: var(--mint); }
+  .cam-close { border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.1); color: #fff; border-radius: 12px; padding: 9px 14px; font: inherit; font-weight: 800; cursor: pointer; }
+  .cam-video { flex: 1; min-height: 0; width: 100%; object-fit: cover; background: #000; }
+  .cam-actions { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 16px calc(18px + env(safe-area-inset-bottom)); background: rgba(0,0,0,.82); }
+  .cam-shot { width: 78px; height: 78px; border: 5px solid #fff; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 3px rgba(255,255,255,.25); cursor: pointer; }
+  .cam-shot:active { transform: scale(.94); }
+  .cam-shot[disabled] { opacity: .45; }
+  .cam-hint { margin: 0; color: #d7e6e2; font-size: 12px; font-weight: 700; text-align: center; }
+  body.cam-open { overflow: hidden; }
+
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .list h2 { margin: 0 0 2px; font-size: 14px; font-weight: 800; color: var(--muted); }
+  .item { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 10px; }
+  .item img { width: 54px; height: 54px; border-radius: 10px; object-fit: cover; flex: none; background: var(--bg2); }
+  .item .info { flex: 1; min-width: 0; }
+  .item .t { font-size: 13.5px; font-weight: 800; }
+  .item .s { font-size: 12.5px; font-weight: 700; margin-top: 2px; }
+  .s.up { color: var(--warn); } .s.wait { color: var(--mint); } .s.done { color: var(--good); } .s.fail { color: var(--bad); }
+  .item .bar { height: 4px; border-radius: 4px; background: var(--bg2); margin-top: 7px; overflow: hidden; }
+  .item .bar i { display: block; height: 100%; width: 0; background: var(--mint); transition: width .25s ease; }
+  .retry { flex: none; background: var(--mint); color: var(--bg); border: 0; border-radius: 10px; font: inherit; font-weight: 900; font-size: 12.5px; padding: 9px 12px; cursor: pointer; }
+
+  .install { display: none; margin-top: 16px; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 14px; font-size: 12.5px; font-weight: 700; color: var(--muted); line-height: 1.8; text-align: center; }
+  .install.show { display: block; }
+  .install b { color: var(--text); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  /* ★ مفتاح الوجهة (شكل زر الآيفون) + ثيم الإدخال السريع الأزرق يتحوّل تدريجياً */
+  .mode { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px auto 0; }
+  .mlabel { font-size: 14.5px; font-weight: 800; color: var(--muted); transition: color .5s ease; }
+  .mlabel.act { color: var(--text); }
+  .sw { position: relative; flex: none; width: 88px; height: 51px; border-radius: 999px; border: 0; padding: 0; cursor: pointer;
+        -webkit-appearance: none; appearance: none; background: var(--mint-dim);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.10), 0 8px 22px rgba(0,0,0,.34);
+        transition: background-color .55s ease, box-shadow .55s ease; }
+  .sw .knob { position: absolute; top: 4px; right: 4px; width: 43px; height: 43px; border-radius: 50%; background: #fff;
+        box-shadow: 0 3px 10px rgba(0,0,0,.38), 0 1px 2px rgba(0,0,0,.2);
+        transition: transform .45s cubic-bezier(.32,1.42,.6,1); }
+  .sw[aria-checked="true"] .knob { transform: translateX(-37px); }
+  .sw[aria-checked="true"] { background: #2f7bff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.16), 0 8px 26px rgba(47,123,255,.5); }
+  .sw:focus-visible { outline: 3px solid #fff; outline-offset: 5px; }
+  .mode-cap { margin: 9px 0 0; font-size: 12.5px; font-weight: 800; color: var(--muted); text-align: center; transition: color .5s ease; }
+  .mode-cap b { color: var(--mint); }
+  html.quick { --bg:#081a2e; --bg2:#0e2743; --card:#123055; --line:#1d4a7d; --mint:#7cc4ff; --mint-dim:#3f8fe0; --text:#eef6ff; --muted:#9dbcd8; }
+  body::after { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0;
+        background: radial-gradient(120% 70% at 50% 0%, #123c6e 0%, #081a2e 62%); transition: opacity .7s ease; }
+  html.quick body::after { opacity: 1; }
+  .wrap { position: relative; z-index: 1; }
+  html, .item, .item img, .logo, .gallery-btn, .retry, .install, .bar i, .mlabel, .mode-cap, .cta, .hint, header p, .link, .dot { transition: background-color .6s ease, border-color .6s ease, color .6s ease, box-shadow .6s ease; }
+  .shutter .ring, .shutter .core { transition: transform .15s ease, background-color .6s ease, border-color .6s ease, box-shadow .6s ease; }
+  @media (prefers-reduced-motion: reduce) { body::after, .sw, .sw .knob, .item { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img class="logo" id="logo" src="logo.png" alt="" onerror="this.classList.add('hide')">
+    <div>
+      <h1>ماسح درب الشفاء</h1>
+      <p>صوّر الفاتورة وتصل للنظام تلقائياً</p>
+    </div>
+    <div class="link"><span class="dot" id="dot"></span><span id="linkTxt">جارٍ الاتصال</span></div>
+   </header>
+
+  <div class="mode">
+    <span class="mlabel act" id="mlScan">الماسح</span>
+    <button class="sw" id="modeSw" type="button" role="switch" aria-checked="false" aria-label="الوجهة: ماسح الفواتير أم الإدخال السريع"><span class="knob"></span></button>
+    <span class="mlabel" id="mlQuick">إدخال سريع</span>
+  </div>
+  <p class="mode-cap">تصل الصور مباشرة إلى <b id="capTo">ماسح الفواتير</b></p>
+  <div class="pages" id="pagesMode">
+    <span class="pages-label">قائمة من صفحتين</span>
+    <button class="sw" id="pagesSw" type="button" role="switch" aria-checked="false" aria-label="تفعيل قراءة قائمة من صفحتين"><span class="knob"></span></button>
+  </div>
+  <p class="page-cap" id="pageCap">صورة واحدة للقائمة</p>
+
+  <main>
+    <button class="shutter" id="shot" type="button" aria-label="تصوير الفاتورة" disabled>
+      <span class="ring"></span><span class="ring r2"></span>
+      <span class="core">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </span>
+    </button>
+    <p class="cta">صوّر الفاتورة</p>
+    <p class="hint">ضع الورقة على سطح مستوٍ بإضاءة جيدة. عند الالتقاط ترتفع الصورة وتُقرأ في برنامج الصيدلية دون أي خطوة أخرى.</p>
+    <button class="gallery-btn" id="pick" type="button">اختيار صورة من المعرض</button>
+    <div class="install" id="install">لتثبيت التطبيق: اضغط زر المشاركة في سفاري ثم <b>إضافة إلى الشاشة الرئيسية</b></div>
+  </main>
+
+  <section class="list" id="list" hidden>
+    <h2>آخر الصور المرسلة</h2>
+  </section>
+</div>
+
+<div class="camera" id="camera" hidden>
+  <div class="cam-top">
+    <b id="camTitle">تصوير الفاتورة</b>
+    <span class="cam-state" id="flashState">الفلاش: جارٍ التشغيل…</span>
+    <button class="cam-close" id="camClose" type="button">إغلاق</button>
+  </div>
+  <video class="cam-video" id="camVideo" autoplay muted playsinline></video>
+  <div class="cam-actions">
+    <button class="cam-shot" id="camShot" type="button" aria-label="التقاط الصورة" disabled></button>
+    <p class="cam-hint">ضع الورقة كاملة داخل الإطار، وثبّت الهاتف قبل الالتقاط.</p>
+  </div>
+</div>
+
+<input class="sr" id="camIn" type="file" accept="image/*" capture="environment" tabindex="-1">
+<input class="sr" id="galIn" type="file" accept="image/*" tabindex="-1">
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+'use strict';
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCtz6MiAPW5I1BDNqJXMe-q8CgOrsEfC10",
+  authDomain: "healingpath-51637.firebaseapp.com",
+  databaseURL: "https://healingpath-51637-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "healingpath-51637",
+  storageBucket: "healingpath-51637.firebasestorage.app",
+  messagingSenderId: "247914857779",
+  appId: "1:247914857779:web:1c0e49c02d3ce6f109aa46"
+};
+
+const $ = id => document.getElementById(id);
+
+/* ★ الوجهة: ماسح الفواتير (افتراضي) أو الإدخال السريع — نفس الصورة، مسار آخر وثيم أزرق */
+const QUICK_INBOX = 'pos/quickInbox';
+const isQuick = () => document.documentElement.classList.contains('quick');
+let pagesOn = false, draft = null;
+function applyMode(q, byUser) {
+  document.documentElement.classList.toggle('quick', q);
+  $('modeSw').setAttribute('aria-checked', q ? 'true' : 'false');
+  $('mlScan').classList.toggle('act', !q);
+  $('mlQuick').classList.toggle('act', q);
+  $('capTo').textContent = q ? 'الإدخال السريع' : 'ماسح الفواتير';
+  const h1 = document.querySelector('header h1'), sub = document.querySelector('header p');
+  if (h1) h1.textContent = q ? 'الإدخال السريع' : 'ماسح درب الشفاء';
+  if (sub) sub.textContent = q ? 'صوّر علبات الدواء دفعة واحدة' : 'صوّر الفاتورة وتصل للنظام تلقائياً';
+  const tc = document.querySelector('meta[name="theme-color"]');
+  if (tc) tc.setAttribute('content', q ? '#081a2e' : '#0b2a28');
+  try { localStorage.setItem('ds_inbox_dest', q ? 'quick' : 'scan'); } catch (_) {}
+  updateCaptureUI();
+  if (byUser && navigator.vibrate) navigator.vibrate(q ? [16, 45, 22] : 22);
+}
+function updateCaptureUI() {
+  const q = isQuick(), two = !q && pagesOn, waiting = !!draft;
+  $('pagesMode').hidden = q;
+  $('pagesSw').setAttribute('aria-checked', pagesOn ? 'true' : 'false');
+  $('pagesSw').disabled = waiting;
+  $('pageCap').classList.toggle('on', two);
+  $('pageCap').textContent = two
+    ? (waiting ? 'صفحة البداية جاهزة — صوّر صفحة الملحق الآن' : 'الأولى لبداية القائمة والثانية للملحق — تُرسلان معاً')
+    : 'صورة واحدة للقائمة';
+  const cta = document.querySelector('.cta'), hint = document.querySelector('.hint'), shot = $('shot');
+  if (cta) cta.textContent = q ? 'صوّر العلبات' : two ? (waiting ? 'صوّر صفحة الملحق' : 'صوّر القائمة') : 'صوّر الفاتورة';
+  if (hint) hint.textContent = q
+    ? 'رصّ العلبات على سطح مستوٍ بحيث تظهر الواجهة الأمامية لكل علبة — صورة واحدة واضحة تكفي لعشرين أو ثلاثين صنفاً، وتصل مباشرة إلى «الإدخال السريع» في الحاسوب.'
+    : two
+      ? 'صوّر بداية القائمة أولاً، ثم صفحة الملحق. بعد الصورة الثانية تُرسل الصفحتان معاً ويقرأهما النظام كقائمة واحدة.'
+      : 'ضع الورقة على سطح مستوٍ بإضاءة جيدة. عند الالتقاط ترتفع الصورة وتُقرأ في برنامج الصيدلية دون أي خطوة أخرى.';
+  if (shot) shot.setAttribute('aria-label', q ? 'تصوير علبات الدواء' : two ? (waiting ? 'تصوير صفحة الملحق' : 'تصوير بداية القائمة') : 'تصوير الفاتورة');
+  if ($('camTitle')) $('camTitle').textContent = q ? 'تصوير العلبات' : two ? (waiting ? 'صفحة الملحق' : 'بداية القائمة') : 'تصوير الفاتورة';
+}
+function setPages(on, byUser) {
+  if (draft && !on) { toast('أكمل صفحة الملحق أو ألغِ الصفحة الأولى أولاً', 'b'); return; }
+  pagesOn = !!on;
+  try { localStorage.setItem('ds_scan_pages', pagesOn ? '1' : '0'); } catch (_) {}
+  updateCaptureUI();
+  if (byUser && navigator.vibrate) navigator.vibrate(18);
+}
+function toast(text, kind) {
+  const old = $('toast');
+  if (old) old.remove();
+  const el = document.createElement('div');
+  el.id = 'toast';
+  el.textContent = text;
+  el.style.cssText = 'position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:50;max-width:90vw;padding:11px 16px;border-radius:12px;background:#fff;color:#173a35;box-shadow:0 10px 30px rgba(0,0,0,.3);font-size:12.5px;font-weight:800;text-align:center';
+  if (kind === 'b') el.style.background = '#fbbf24';
+  document.body.append(el);
+  setTimeout(() => el.remove(), 3200);
+}
+$('modeSw').onclick = () => applyMode(!isQuick(), true);
+$('pagesSw').onclick = () => setPages(!pagesOn, true);
+const INBOX = 'pos/scanInbox';
+const MAX_SIDE = 2200, QUALITY = 0.86;
+let db = null, ready = false;
+const jobs = new Map();
+
+/* manifest يُنشأ برمجياً حتى يبقى كل شيء في ملف واحد */
+(() => {
+  try {
+    const base = location.href.split('#')[0].split('?')[0];
+    const icon = new URL('logo.png', base).href;
+    const mf = {
+      name: 'ماسح درب الشفاء', short_name: 'ماسح الشفاء', lang: 'ar', dir: 'rtl',
+      start_url: base, scope: base, display: 'standalone',
+      background_color: '#0b2a28', theme_color: '#0b2a28',
+      icons: [{ src: icon, sizes: '512x512', type: 'image/png', purpose: 'any' }]
+    };
+    const l = document.createElement('link');
+    l.rel = 'manifest';
+    l.href = URL.createObjectURL(new Blob([JSON.stringify(mf)], { type: 'application/manifest+json' }));
+    document.head.append(l);
+  } catch (_) {}
+  const standalone = window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  if (!standalone) $('install').classList.add('show');
+})();
+
+function setLink(on, txt) {
+  $('dot').classList.toggle('on', !!on);
+  $('linkTxt').textContent = txt;
+  $('shot').disabled = !ready;
+}
+
+async function boot() {
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    if (!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
+    db = firebase.database();
+    ready = true;
+    db.ref('.info/connected').on('value', s => setLink(s.val() === true, s.val() === true ? 'متصل' : 'لا يوجد اتصال'));
+    setLink(true, 'متصل');
+  } catch (e) {
+    console.warn(e);
+    ready = false;
+    setLink(false, 'تعذّر الاتصال');
+    setTimeout(boot, 6000);
+  }
+}
+window.addEventListener('online', () => { if (!ready) boot(); });
+
+function loadImage(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); res(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('bad image')); };
+    img.src = url;
+  });
+}
+
+async function compress(file) {
+  const img = await loadImage(file);
+  const k = Math.min(1, MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.naturalWidth * k);
+  c.height = Math.round(img.naturalHeight * k);
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+  x.drawImage(img, 0, 0, c.width, c.height);
+  const full = c.toDataURL('image/jpeg', QUALITY);
+  const t = document.createElement('canvas');
+  const tk = 108 / Math.max(c.width, c.height);
+  t.width = Math.round(c.width * tk); t.height = Math.round(c.height * tk);
+  t.getContext('2d').drawImage(c, 0, 0, t.width, t.height);
+  return { full, thumb: t.toDataURL('image/jpeg', 0.6) };
+}
+
+const STATUS = {
+  compressing: ['up',   'جارٍ تجهيز الصورة…'],
+  ready:      ['wait', 'صفحة البداية جاهزة — صوّر صفحة الملحق'],
+  uploading:  ['up',   'جارٍ الرفع…'],
+  new:        ['wait', 'وصلت للسحابة — بانتظار فتح الماسح في الحاسوب'],
+  processing: ['wait', 'النظام يقرأ الفاتورة…'],
+  done:       ['done', 'تمت القراءة في الحاسوب ✓'],
+  failed:     ['fail', 'فشلت القراءة — صوّر الفاتورة مرة ثانية'],
+  error:      ['fail', 'فشل الرفع']
+};
+
+function draw(job) {
+  let el = job.el;
+  if (!el) {
+    el = job.el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = '<img alt=""><div class="info"><div class="t"></div><div class="s"></div><div class="bar"><i></i></div></div>';
+    el.querySelector('img').src = job.thumb;
+    el.querySelector('.t').textContent = (job.pageCount > 1 ? 'قائمة صفحتين • ' : '') + job.time;
+    const list = $('list');
+    list.hidden = false;
+    list.insertBefore(el, list.children[1] || null);
+    while (list.children.length > 9) list.lastChild.remove();
+  }
+  const [cls, txt] = STATUS[job.status] || STATUS.error;
+  const QTXT = isQuick() && (job.inbox || INBOX) === QUICK_INBOX
+    ? { new: 'وصلت للسحابة — بانتظار فتح «الإدخال السريع» في الحاسوب', processing: 'الإدخال السريع يقرأ العلبات…', done: 'تمت القراءة في الإدخال السريع ✓', failed: 'فشلت قراءة العلبات — صوّرها من جديد' } : null;
+  const s = el.querySelector('.s');
+  s.className = 's ' + cls; s.textContent = job.message || (QTXT && QTXT[job.status]) || txt;
+  el.querySelector('.bar').style.display = job.status === 'uploading' ? '' : 'none';
+  el.querySelector('.bar i').style.width = (job.progress || 0) + '%';
+  const old = el.querySelector('.retry');
+  if (old) old.remove();
+  if (job.status === 'error' || job.status === 'ready') {
+    const b = document.createElement('button');
+    b.className = 'retry'; b.type = 'button'; b.textContent = job.status === 'ready' ? 'إلغاء' : 'إعادة الرفع';
+    b.onclick = () => job.status === 'ready' ? cancelDraft(job)
+      : (job.file && (!job.pages || job.pages.length < (job.twoPage ? 2 : 1)) ? retryCompression(job) : upload(job));
+    el.append(b);
+  }
+}
+
+async function upload(job) {
+  if (!ready) { job.status = 'error'; draw(job); boot(); return; }
+  const pages = (job.pages && job.pages.length ? job.pages : [{ full: job.full, thumb: job.thumb }]).slice(0, 2);
+  if (!pages[0] || !pages[0].full) { job.status = 'error'; draw(job); return; }
+  job.pageCount = pages.length;
+  job.status = 'uploading'; job.progress = 35; delete job.message; draw(job);
+  const ref = db.ref((job.inbox || INBOX) + '/' + job.id);
+  let off = null, timer = null;
+  try {
+    off = ref.on('value', s => {
+      const v = s.val();
+      if (!v || !v.status) return;
+      job.status = v.status;
+      job.message = v.message || '';
+      draw(job);
+      if (v.status === 'done' || v.status === 'failed') {
+        job.finished = true;
+        if (off) { off(); off = null; }
+      }
+    });
+    const timeout = new Promise((_, rej) => { timer = setTimeout(() => rej(new Error('timeout')), 45000); });
+    await Promise.race([ref.set({
+      id: job.id,
+      status: 'new',
+      createdAt: Date.now(),
+      device: 'phone',
+      dest: (job.inbox || INBOX) === QUICK_INBOX ? 'quick' : 'scan',
+      image: pages[0].full,
+      images: pages.length > 1 ? pages.map(p => p.full) : null,
+      thumb: pages[0].thumb,
+      pageCount: pages.length
+    }), timeout]);
+    if (!job.finished) { job.progress = 100; job.status = 'new'; delete job.message; draw(job); }
+  } catch (e) {
+    console.warn(e);
+    job.status = 'error'; job.message = ''; draw(job);
+  } finally {
+    if (timer) clearTimeout(timer);
+    if (job.status === 'error' && off) { off(); off = null; }
+  }
+}
+
+function makeJob(twoPage) {
+  const id = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+  const d = new Date();
+  const job = { id, twoPage: !!twoPage, pages: [], status: 'compressing', progress: 0, thumb: '', full: '',
+    inbox: isQuick() ? QUICK_INBOX : INBOX, time: d.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' }) };
+  jobs.set(id, job);
+  return job;
+}
+async function prepareJob(job, file) {
+  if (!file) return;
+  job.file = file; job.status = 'compressing'; job.progress = 0; delete job.message; draw(job);
+  try {
+    const p = await compress(file);
+    job.pages.push(p); job.full = p.full; job.thumb = p.thumb; job.pageCount = job.pages.length;
+    draw(job);
+    if (navigator.vibrate) navigator.vibrate(30);
+    if (job.pages.length >= (job.twoPage ? 2 : 1)) {
+      if (draft === job) draft = null;
+      updateCaptureUI();
+      await upload(job);
+    } else {
+      job.status = 'ready'; draw(job); updateCaptureUI();
+    }
+  } catch (e) {
+    console.warn(e);
+    job.thumb = job.thumb || 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+    job.status = 'error'; draw(job);
+  }
+}
+function retryCompression(job) { return prepareJob(job, job.file); }
+function cancelDraft(job) {
+  if (draft !== job) return;
+  draft = null;
+  jobs.delete(job.id);
+  if (job.el) job.el.remove();
+  updateCaptureUI();
+}
+async function handleFiles(files) {
+  for (const file of files) await handleFile(file);
+}
+async function handleFile(file) {
+  if (!file) return;
+  const two = !isQuick() && pagesOn;
+  if (two && draft && draft.pages.length >= 2) { toast('صفحتا القائمة جاهزتان — انتظر الرفع', 'b'); return; }
+  const job = two ? (draft || (draft = makeJob(true))) : makeJob(false);
+  await prepareJob(job, file);
+}
+
+let camStream = null, camTrack = null;
+async function setTorch() {
+  if (!camTrack) return false;
+  const caps = camTrack.getCapabilities ? camTrack.getCapabilities() : null;
+  if (caps && caps.torch === false) {
+    $('flashState').textContent = 'الفلاش غير مدعوم في هذا المتصفح';
+    $('flashState').style.color = '#fbbf24';
+    return false;
+  }
+  try {
+    await camTrack.applyConstraints({ advanced: [{ torch: true }] });
+    $('flashState').textContent = 'الفلاش: يعمل تلقائياً';
+    $('flashState').style.color = '#6ee7c8';
+    return true;
+  } catch (_) {
+    $('flashState').textContent = 'الفلاش غير مدعوم في هذا المتصفح';
+    $('flashState').style.color = '#fbbf24';
+    return false;
+  }
+}
+function closeCamera() {
+  if (camStream) camStream.getTracks().forEach(t => { try { t.stop(); } catch (_) {} });
+  camStream = null; camTrack = null;
+  $('camVideo').srcObject = null;
+  $('camera').hidden = true;
+  document.body.classList.remove('cam-open');
+  $('camShot').disabled = true;
+}
+async function openCamera() {
+  if (!ready) { boot(); toast('لا يوجد اتصال — أعد المحاولة بعد قليل', 'b'); return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { $('camIn').click(); return; }
+  closeCamera();
+  $('camera').hidden = false;
+  document.body.classList.add('cam-open');
+  $('flashState').textContent = 'الفلاش: جارٍ التشغيل…';
+  $('flashState').style.color = '#6ee7c8';
+  $('camShot').disabled = true;
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+    });
+    camTrack = camStream.getVideoTracks()[0];
+    $('camVideo').srcObject = camStream;
+    await $('camVideo').play().catch(() => {});
+    $('camShot').disabled = false;
+    await setTorch();
+  } catch (e) {
+    console.warn(e);
+    closeCamera();
+    toast('تعذّر فتح الكاميرا — جارٍ فتح كاميرا الهاتف', 'b');
+    $('camIn').click();
+  }
+}
+async function captureFrame() {
+  const video = $('camVideo');
+  if (!video.videoWidth || !video.videoHeight) { toast('الكاميرا ما زالت تجهز — انتظر لحظة', 'b'); return; }
+  $('camShot').disabled = true;
+  try {
+    const c = document.createElement('canvas');
+    c.width = video.videoWidth; c.height = video.videoHeight;
+    c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.94));
+    if (!blob) throw new Error('capture failed');
+    const file = new File([blob], `invoice-page-${draft ? draft.pages.length + 1 : 1}.jpg`, { type: 'image/jpeg' });
+    closeCamera();
+    await handleFile(file);
+  } catch (e) {
+    console.warn(e);
+    $('camShot').disabled = false;
+    toast('تعذّر الالتقاط — حاول مرة ثانية', 'b');
+  }
+}
+
+const cam = $('camIn'), gal = $('galIn');
+$('shot').onclick = openCamera;
+$('camShot').onclick = captureFrame;
+$('camClose').onclick = closeCamera;
+$('pick').onclick = () => { gal.value = ''; gal.click(); };
+cam.onchange = () => handleFile(cam.files[0]);
+gal.onchange = () => handleFiles([...gal.files].slice(0, (!isQuick() && pagesOn) ? 2 : 10));
+document.addEventListener('visibilitychange', () => { if (!document.hidden && camTrack) setTorch(); });
+
+try {
+  pagesOn = localStorage.getItem('ds_scan_pages') === '1';
+  applyMode(localStorage.getItem('ds_inbox_dest') === 'quick');
+} catch (_) { applyMode(false); }
+boot();
+</script>
+</body>
+</html>
